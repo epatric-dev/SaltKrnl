@@ -4,13 +4,13 @@ CC ?= clang
 LD ?= ld.lld
 OBJCOPY ?= objcopy
 
-CXXFLAGS := -target x86_64-unknown-none-elf -ffreestanding -fno-exceptions \
+CXXFLAGS := -target x86_64-unknown-none-elf -ffreestanding -Iinclude -fno-exceptions \
     -fno-rtti -fno-stack-protector -fno-pic -fno-pie -mno-red-zone \
     -mno-sse -mno-mmx -std=c++17 -Wall -Wextra
 ASFLAGS := -target x86_64-unknown-none-elf
 LDFLAGS := -m elf_x86_64 -nostdlib -T linker.ld
 
-KERNEL_O := $(BUILD_DIR)/main.o
+KERNEL_O := $(BUILD_DIR)/main.o $(BUILD_DIR)/serial.o
 START_O := $(BUILD_DIR)/start.o
 KERNEL_ELF := $(BUILD_DIR)/kernel.elf
 KERNEL_BIN := $(BUILD_DIR)/kernel.bin
@@ -22,7 +22,11 @@ all: $(KERNEL_BIN)
 $(BUILD_DIR):
 	@mkdir -p $@
 
-$(KERNEL_O): main.cpp | $(BUILD_DIR)
+$(BUILD_DIR)/main.o: main.cpp include/devices/serial.h | $(BUILD_DIR)
+	@echo "  CXX $@"
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/serial.o: devices/serial.cpp include/devices/io.h include/devices/serial.h | $(BUILD_DIR)
 	@echo "  CXX $@"
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
